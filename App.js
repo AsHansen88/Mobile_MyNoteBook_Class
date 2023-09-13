@@ -3,7 +3,10 @@ import { useState } from 'react';
 import { StyleSheet, TextInput, View, Button, FlatList, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { app } from './firebase'
+import { app, database } from './firebase'
+import { collection, addDoc } from 'firebase/firestore';
+import { useCollection } from 'react-firebase-hooks/firestore'
+
 
 export default function App() {
 
@@ -40,6 +43,8 @@ const ListPage = ({navigation, route}) => {
   const myList = [{key:1, name: "Anna"}, {key:2, name: "Bob"}]
   const [notes, setNotes] = useState([])
   const [text, setText] = useState('')
+  const [values, loading, error] = useCollection(collection(database, "notes"))
+  const data = values?.docs.map((doc) => ({...doc.data(), id: doc.id}))
 
 
     function handleButon(item){
@@ -48,12 +53,15 @@ const ListPage = ({navigation, route}) => {
 
   }
 
-  function buttonHandler(item){
-    //alert ("You Typed: " + text)
-    setNotes(
-      [...notes, {key:notes.length, name: text}]
-    )
-    navigation.navigate('DetailPage', {note:item})
+  async function buttonHandler(){
+    try{
+    await addDoc(collection(database, "notes"), {
+      text: text
+    })
+    }catch(err){
+      console.log("Fejl i DB" + err)
+    }
+    
     }
 
 
@@ -66,25 +74,22 @@ const ListPage = ({navigation, route}) => {
       renderItem={(note) => <Button title = {note.item.name} onPress={() => handleButon(note.item)}></Button>}
       />
       <TextInput style={styles.TextInput} onChangeText={(txt) => setText(txt)} />
-      <Button title='press me' onPress={handleButon}></Button>
+      <Button title='press me' onPress={buttonHandler}></Button>
       <FlatList
-      data={notes}
-      renderItem={(note) => <Button title = {note.item.name} onPress={() => buttonHandler(note.item)}></Button>}
+      data={data}
+      renderItem={(note) => <Text title = {note.item.text}></Text>}
       />
     </View>
   )
 }
 
-const DetailPage = ({navigation, route}) => {
+const DetailPage = ({ route}) => {
 
   const message = route.params?.message
-  const note = route.params?.message
-
-
+ 
   return(
     <View>
-      <Text>Detaljer {message.name}</Text>
-      <Text>Notes {note.name}</Text>
+      <Text>Detaljer {message.text}</Text>
     </View>
   )
 }
