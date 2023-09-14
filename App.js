@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+:)import React, { useState } from 'react';
 import { View, Text, TextInput, Button, FlatList, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { app, database } from './firebase';
-import { collection, addDoc, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { useCollection } from 'react-firebase-hooks/firestore';
 
 export default function App() {
@@ -12,17 +12,18 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName='ListPage'>
-        <Stack.Screen name='list' component={ListPage} />
+        <Stack.Screen name='ListPage' component={ListPage} />
         <Stack.Screen name='DetailPage' component={DetailPage} />
       </Stack.Navigator>
     </NavigationContainer>
   );
 }
 
-const ListPage = ({ navigation }) => {
+const ListPage = () => {
   const [text, setText] = useState('');
   const [values, loading, error] = useCollection(collection(database, 'notes'));
   const data = values?.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
+  const [editobj, setEditObj] = useState(null);
 
   async function buttonHandler() {
     try {
@@ -43,15 +44,37 @@ const ListPage = ({ navigation }) => {
     }
   }
 
+  function viewUpdateDialog(item) {
+    setEditObj(item);
+    setText(item.text); // Initialize the text input with the current text
+  }
+
+  async function saveupdate() {
+    await updateDoc(doc(database, 'notes', editobj.id), {
+      text: text,
+    });
+    setText('');
+    setEditObj(null);
+  }
+
   return (
     <View>
+      {editobj && (
+        <View>
+          <TextInput value={text} onChangeText={(txt) => setText(txt)} />
+          <Text onPress={saveupdate}>Save</Text>
+        </View>
+      )}
+
       <Text>My Notes</Text>
+
       <TextInput
         style={styles.TextInput}
         onChangeText={(txt) => setText(txt)}
         placeholder='Enter your note'
         value={text}
       />
+
       <Button title='Add Note' onPress={buttonHandler} />
       <FlatList
         data={data}
@@ -59,6 +82,7 @@ const ListPage = ({ navigation }) => {
           <View>
             <Text>{item.text}</Text>
             <Button title='Delete' onPress={() => deleteDocument(item.id)} />
+            <Button title='Update' onPress={() => viewUpdateDialog(item)} />
           </View>
         )}
         keyExtractor={(item) => item.id}
