@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Button, FlatList, StyleSheet, Image } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { app, database } from './firebase';
 import { collection, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { useCollection } from 'react-firebase-hooks/firestore';
+import * as ImagePicker from 'expo-image-picker'
 
 export default function App() {
   const Stack = createNativeStackNavigator();
@@ -24,6 +25,8 @@ const ListPage = () => {
   const [values, loading, error] = useCollection(collection(database, 'notes'));
   const data = values?.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
   const [editobj, setEditObj] = useState(null);
+  const [imagePath, SetImagePath] = useState(null)
+
 
   async function buttonHandler() {
     try {
@@ -33,6 +36,16 @@ const ListPage = () => {
       setText('');
     } catch (err) {
       console.log('Fejl i DB' + err);
+    }
+  }
+
+  async function launchImagePicker (){
+   let result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true
+    })
+    if(!result.canceled){
+      //vis billede
+      SetImagePath(result.assets[0].uri)
     }
   }
 
@@ -75,6 +88,8 @@ const ListPage = () => {
         value={text}
       />
 
+      
+
       <Button title='Add Note' onPress={buttonHandler} />
       <FlatList
         data={data}
@@ -83,6 +98,9 @@ const ListPage = () => {
             <Text>{item.text}</Text>
             <Button title='Delete' onPress={() => deleteDocument(item.id)} />
             <Button title='Update' onPress={() => viewUpdateDialog(item)} />
+            <Image style = {{width: 200, height: 200}} source={{uri: imagePath}}/>
+            <Button title='Pick image' onPress={launchImagePicker}/>
+          
           </View>
         )}
         keyExtractor={(item) => item.id}
