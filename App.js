@@ -6,6 +6,8 @@ import { app, database } from './firebase';
 import { collection, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import * as ImagePicker from 'expo-image-picker'
+import { storage } from './firebase'
+import { ref, uploadBytes } from 'firebase/storage'
 
 export default function App() {
   const Stack = createNativeStackNavigator();
@@ -39,7 +41,7 @@ const ListPage = () => {
     }
   }
 
-  async function launchImagePicker (){
+    async function launchImagePicker (){
    let result = await ImagePicker.launchImageLibraryAsync({
       allowsEditing: true
     })
@@ -48,6 +50,18 @@ const ListPage = () => {
       SetImagePath(result.assets[0].uri)
     }
   }
+
+ async function uploadImage(){
+
+  const res = await fetch(imagePath)
+  const blob = await res.blob()
+  const storageRef = ref(storage, "Anders.jpg")
+  uploadBytes(storageRef, blob).then((snapshot) => {
+    alert ("Image Uploaded")  
+  })
+
+}
+
 
   async function deleteDocument(id) {
     try {
@@ -99,6 +113,7 @@ const ListPage = () => {
             <Button title='Delete' onPress={() => deleteDocument(item.id)} />
             <Button title='Update' onPress={() => viewUpdateDialog(item)} />
             <Image style = {{width: 200, height: 200}} source={{uri: imagePath}}/>
+            <Button title='upload image' onPress={uploadImage}/>
             <Button title='Pick image' onPress={launchImagePicker}/>
           
           </View>
