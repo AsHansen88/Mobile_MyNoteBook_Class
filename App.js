@@ -96,11 +96,13 @@ async function downloadImage() {
       {editobj && (
         <View>
           <TextInput value={text} onChangeText={(txt) => setText(txt)} />
+          <Text onPress={launchImagePicker}>Add Image</Text>
           <Text onPress={saveupdate}>Save</Text>
         </View>
       )}
 
       <Text>My Notes</Text>
+      <Image />
 
       <TextInput
         style={styles.TextInput}
