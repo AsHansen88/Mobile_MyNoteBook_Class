@@ -9,6 +9,7 @@ import * as ImagePicker from 'expo-image-picker'
 import { storage } from './firebase'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 
+
 export default function App() {
   const Stack = createNativeStackNavigator();
 
@@ -55,15 +56,15 @@ const ListPage = () => {
 
   const res = await fetch(imagePath)
   const blob = await res.blob()
-  const storageRef = ref(storage, "Anders.jpg")
+  const storageRef = ref(storage, editobj + ".jpg")
   uploadBytes(storageRef, blob).then((snapshot) => {
     alert ("Image Uploaded")  
   })
 
 }
 
-async function downloadImage() {
-  getDownloadURL(ref(storage, "Anders.jpg"))
+async function downloadImage(idI) {
+  getDownloadURL(ref(storage, idI + ".jpg"))
   .then((url) => {
     SetImagePath(url)
   })
@@ -80,13 +81,17 @@ async function downloadImage() {
 
   function viewUpdateDialog(item) {
     setEditObj(item);
-    setText(item.text); // Initialize the text input with the current text
+    setText(item.text); // undgå at gemme med tomt felt
+
   }
 
   async function saveupdate() {
     await updateDoc(doc(database, 'notes', editobj.id), {
       text: text,
     });
+    if(imagePath){
+      uploadImage()
+    }
     setText('');
     setEditObj(null);
   }
@@ -102,7 +107,7 @@ async function downloadImage() {
       )}
 
       <Text>My Notes</Text>
-      <Image />
+      <Image source= {{uri:imagePath}} style = {{width: 100, height: 100}}/>
 
       <TextInput
         style={styles.TextInput}
@@ -118,7 +123,7 @@ async function downloadImage() {
         data={data}
         renderItem={({ item }) => (
           <View>
-            <Text>{item.text}</Text>
+            <Text onPress={() => downloadImage(item.idI)}>{item.text}</Text>
             <Button title='Delete' onPress={() => deleteDocument(item.id)} />
             <Button title='Update' onPress={() => viewUpdateDialog(item)} />
             <Image style = {{width: 200, height: 200}} source={{uri: imagePath}}/>
